@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="calculateLeaveSub_Flow" doc:id="57e2754d-f6d2-4680-ad23-5c2e73ab111b">
+		<set-payload value='#[%dw 2.0&#10;output application/json&#10;var SickLeave = vars.leaveReport filter ($.leavetype == "Sick Leave")&#10;var PersonalLeave = vars.leaveReport filter ($.leavetype == "Personal Leave")&#10;var SickFull = SickLeave filter ($.leaveduration == "Full Day")&#10;var SickHalf = SickLeave filter ($.leaveduration == "Half Day")&#10;var PersonalFull = PersonalLeave filter ($.leaveduration == "Full Day")&#10;var PersonalHalf = PersonalLeave filter ($.leaveduration == "Half Day")&#10;---&#10;[{&#10;    Sickfull: if (SickFull == [])(0) else SickFull default 0, &#10;    Sickhalf: sizeOf(SickHalf) / 2 default 0,&#10;    Personalfull:if (PersonalFull == [])(0) else PersonalFull default 0,&#10;    Personalhalf: sizeOf(PersonalHalf) / 2 default 0&#10;}]]' doc:name="Input Payload mapping" doc:id="1dd4edc4-12da-49d1-9ec5-43292c1434df" />
+		<set-variable value="#[0]" doc:name="PersonalfullBooked" doc:id="e1c64fcb-039e-4146-8c40-8ed55f084929" variableName="PersonalfullBooked" />
+		<set-variable value="#[0]" doc:name="SickfullBooked" doc:id="b8d6f06f-56e7-4eeb-87a7-acdc7303594d" variableName="SickfullBooked" />
+		<choice doc:name="Choice" doc:id="aa8eaa8f-2db5-4bde-b513-2cb99266f206" >
+			<when expression='#[payload.Personalfull == [0] or payload.Personalfull == [null]]'>
+				<logger level="INFO" doc:name="Personalfull" doc:id="0aef7692-87af-461c-bb0c-8f975f2de23d" message="#[{Personalfull : 0}]"/>
+			</when>
+			<otherwise >
+				<foreach doc:name="For Each for calculate Personal_full Leave" doc:id="34a7ff0e-e6e0-45e6-a5ca-f207d82d3d80" collection="#[payload.Personalfull]">
+			<set-variable value="#[//%dw 2.0&#10;//output application/json&#10;//---&#10;//vars.PersonalfullBooked + (daysBetween(payload.fromdate, payload.todate) + 1)&#10;%dw 2.0&#10;output application/json&#10;---&#10;vars.PersonalfullBooked + (payload map ((item, index) -&gt; (daysBetween(item.fromdate as Date, item.todate as Date) + 1)) reduce ((accumulator, currentValue) -&gt; accumulator + currentValue))]" doc:name="calculate PersonalfullBooked" doc:id="6d6d22aa-aca3-459c-a05d-ce7ace0d7d56" variableName="PersonalfullBooked" />
+		</foreach>
+			</otherwise>
+		</choice>
+		<choice doc:name="Choice" doc:id="fce63b34-dfdd-4a56-8499-d283f9bc05d5" >
+			<when expression='#[payload.Sickfull == [0] or payload.Sickfull == [null]]'>
+				<logger level="INFO" doc:name="Sickfull" doc:id="8224e5aa-2e2f-4bcf-9a3b-5d5fe038d10d" message="#[{Sickfull : 0}]"/>
+			</when>
+			<otherwise >
+				<foreach doc:name="For Each for calculate Sick_full Leave" doc:id="ee539923-c4e0-4ff9-a2ae-9ea9654351f0" collection="#[payload.Sickfull]">
+			<set-variable value="#[//%dw 2.0&#10;//output application/json&#10;//---&#10;//vars.SickfullBooked + (daysBetween(payload.fromdate, payload.todate) + 1)&#10;%dw 2.0&#10;output application/json&#10;---&#10;vars.SickfullBooked + (payload map ((item, index) -&gt; (daysBetween(item.fromdate as Date, item.todate as Date) + 1)) reduce ((accumulator, currentValue) -&gt; accumulator + currentValue))]" doc:name="calculate SickfullBooked" doc:id="c4b5095b-719d-42e6-9b15-b8d3163047e8" variableName="SickfullBooked" />
+		</foreach>
+			</otherwise>
+		</choice>
+
+
+	</sub-flow>
+	<sub-flow name="leaveReportSub_Flow" doc:id="c3b8bd89-050d-46a4-a9d0-ba9fe03c347a" >
+		<until-successful maxRetries="${until.retries}" doc:name="Until Successful" doc:id="fce319e2-6ca9-42ef-87ad-ec325da742ae" millisBetweenRetries="${until.millisecs}">
+			<try doc:name="Try" doc:id="4da3d9e2-b9fe-4b83-9eb2-2ebff36c520d">
+			<http:request method="${leaveTracker-sapi.leaveReport-method}" doc:name="leaveReport-sapi" doc:id="fa65fc6d-0421-4f25-a560-a38e478652ec" config-ref="HTTP_Request_leaveTracker-sapi" path="${leaveTracker-sapi.leaveReport}/{EmployeeID}" target="leaveReport">
+			<http:uri-params><![CDATA[#[output application/java
+---
+{
+	EmployeeID : vars.EmployeeID
+}]]]></http:uri-params>
+		</http:request>
+				<error-handler ref="request-errorHandler" />
+		</try>
+		</until-successful>
+	</sub-flow>
+</mule>

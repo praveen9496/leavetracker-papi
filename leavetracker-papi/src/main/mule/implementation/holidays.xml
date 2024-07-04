@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="post-holidaySub_Flow" doc:id="44c7f281-0757-4172-93b5-4ce18283df26" >
+		<until-successful maxRetries="${until.retries}" doc:name="Until Successful" doc:id="1e81eae8-a65d-40b1-ac52-d9c71dedfef9" millisBetweenRetries="${until.millisecs}">
+			<try doc:name="Try" doc:id="fffa7419-adff-4ead-9e17-ede2242910d0">
+				<http:request method="${leaveTracker-sapi.holiday-createMethod}" doc:name="leaveTracker-sapi" doc:id="ef3c98ac-3b00-4f2d-9744-555d5d36df5f" config-ref="HTTP_Request_leaveTracker-sapi" path="${leaveTracker-sapi.holiday}"/>
+				<error-handler ref="request-errorHandler" />
+		</try>
+		</until-successful>
+	</sub-flow>
+	<sub-flow name="get-holidaySub_Flow" doc:id="07bf859d-7aee-47e7-9497-b4ca41339ac1" >
+		<set-variable value='#[%dw 2.0&#10;output application/json&#10;---&#10;if(isEmpty(attributes.queryParams.Date)==false )&#10;{&#10;	"Date" : attributes.queryParams.Date  &#10;} else {&#10;	"date" : attributes.queryParams.Date  &#10;}]' doc:name="Date variable" doc:id="baaca4b2-4ca5-4bb0-8d5b-d9b4388927fc" variableName="Date"/>
+		<until-successful maxRetries="${until.retries}" doc:name="Until Successful" doc:id="e4db4689-1c84-48ce-99c0-0a057a3520fb" millisBetweenRetries="${until.millisecs}">
+			<try doc:name="Try" doc:id="40c58100-4362-433d-a0c3-8a7c7ea052db">
+				<http:request method="${leaveTracker-sapi.holiday-retrieveMethod}" doc:name="leaveTracker-sapi" doc:id="aa285170-787d-4945-a973-1ad314a35238" config-ref="HTTP_Request_leaveTracker-sapi" path="${leaveTracker-sapi.holiday}">
+					<http:query-params ><![CDATA[#[vars.Date]]]></http:query-params>
+				</http:request>
+				<error-handler ref="request-errorHandler" />
+		</try>
+		</until-successful>
+	</sub-flow>
+</mule>

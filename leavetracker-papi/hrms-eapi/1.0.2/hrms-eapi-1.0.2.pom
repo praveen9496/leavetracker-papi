@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>ceef0621-18e4-4e4f-a695-76df909c0ffa</groupId>
+  <artifactId>hrms-eapi</artifactId>
+  <version>1.0.2</version>
+  <name>hrms-eapi</name>
+  <properties>
+    <classifier>raml</classifier>
+    <main>hrms-eapi.raml</main>
+    <status>published</status>
+    <originalFormatVersion>1.0</originalFormatVersion>
+    <apiVersion>1.0</apiVersion>
+    <projectId>fbcdbd58-5e10-4097-80bf-10cfdec92e59</projectId>
+    <branchId>master</branchId>
+    <commitId>0b2052cbfd218893d3109cf7c230a33291dfcf48</commitId>
+    <keywords/>
+    <type>rest-api</type>
+    <mainFile>hrms-eapi.raml</mainFile>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>ceef0621-18e4-4e4f-a695-76df909c0ffa</groupId>
+      <version>1.0.0</version>
+      <type>zip</type>
+      <classifier>raml-fragment</classifier>
+      <artifactId>errorresponse</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ceef0621-18e4-4e4f-a695-76df909c0ffa</groupId>
+      <version>1.0.0</version>
+      <type>zip</type>
+      <classifier>raml-fragment</classifier>
+      <artifactId>security-client_id-enforcement</artifactId>
+    </dependency>
+  </dependencies>
+  <repositories>
+    <repository>
+      <id>anypoint-exchange</id>
+      <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+    </repository>
+  </repositories>
+</project>

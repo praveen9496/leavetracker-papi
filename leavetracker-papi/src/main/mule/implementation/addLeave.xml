@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="addLeaveSub_Flow" doc:id="23f9bd09-5cec-4b5c-bc6a-e50116032f09" >
+		<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	EmployeeID: payload.EmployeeID,&#10;	leaveType : payload.leaveType,&#10;	leaveDuration : payload.leaveDuration,&#10;	fromDate: payload.fromDate,&#10;	toDate: payload.toDate,&#10;	reasonForLeave: payload.reasonForLeave default "" ,&#10;	recordID: uuid()&#10;}]' doc:name="input parameters" doc:id="44ab5183-fe19-420b-a013-68fc04f13990" />
+		<until-successful maxRetries="${until.retries}" doc:name="Until Successful" doc:id="617b3721-ac39-4208-83d8-23c1019d8318" millisBetweenRetries="${until.millisecs}">
+			<try doc:name="Try" doc:id="8911b020-e7f8-418d-9072-498deef9322f">
+			<http:request method="${leaveTracker-sapi.addLeave-method}" doc:name="addLeave-sapi" doc:id="a9984302-bb33-49f1-85c2-6cb6083b9189" config-ref="HTTP_Request_leaveTracker-sapi" path="${leaveTracker-sapi.addLeave}" />
+				<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "Status" : "Leave Applied Successfully"&#10;}]' doc:name="response payload" doc:id="9a25e7fa-09c6-498d-8a45-2696b9cccce4" />
+				<error-handler ref="request-errorHandler" />
+		</try>
+		</until-successful>
+	</sub-flow>
+</mule>

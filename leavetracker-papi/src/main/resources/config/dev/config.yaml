@@ -1,0 +1,36 @@
+http:
+ host: "0.0.0.0"
+ port: "8081"
+ path: "/api/*"
+ 
+ 
+leaveTracker-sapi:
+  host: "leavetracker-sapi.us-e2.cloudhub.io" 
+  basePath: "/api/Leave"
+  
+  addLeave: "/addLeave"
+  addLeave-method:  "POST"
+    
+  cancelLeave: "/cancelLeave"  
+  cancelLeave-method: "DELETE"
+  
+  leaveReport: "/leaveReport"
+  leaveReport-method:  "GET"
+  
+  totalLeave: "/totalLeave"
+  totalLeave-retrieveMethod: "GET"
+  totalLeave-updateMethod: "PUT"
+  
+  holiday: "/holidays"
+  holiday-createMethod: "POST"
+  holiday-retrieveMethod: "GET"
+  
+until:
+  retries: "1"
+  millisecs:   "60000"
+
+
+ 
+ 
+  
+ 

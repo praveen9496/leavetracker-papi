@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<flow name="leavetracker-papi-main">
+        <http:listener config-ref="leavetracker-papi-httpListenerConfig" path="${http.path}">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="leavetracker-papi-config" />
+		<error-handler ref="main-errorHandler" />
+    </flow>
+    <flow name="leavetracker-papi-console">
+        <http:listener config-ref="leavetracker-papi-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="leavetracker-papi-config" />
+		<error-handler ref="console-errorHandler" />
+    </flow>
+    <flow name="put:\Leave\totalLeave:application\json:leavetracker-papi-config">
+        <flow-ref doc:name="totalLeave-update" doc:id="3de94b70-2df1-4069-9a30-a4ce672d9f46" name="totalLeave-put-Sub_Flow"/>
+    </flow>
+    <flow name="delete:\Leave\cancelLeave\(EmployeeID):leavetracker-papi-config">
+        <flow-ref doc:name="cancelLeave" doc:id="07e3b770-63b1-4dfa-a341-a3f98dcbb1eb" name="cancelLeaveSub_Flow"/>
+    </flow>
+    <flow name="get:\Leave\totalLeave:leavetracker-papi-config">
+        <flow-ref doc:name="totalLeave-get" doc:id="d113a842-eb36-451a-8d18-c76e5a97830e" name="totalLeave-get-Sub_Flow"/>
+		<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;payload]' doc:name="response" doc:id="152ef073-06f6-4274-a9bd-a8b9fe0795a8" />
+    </flow>
+    <flow name="get:\Leave\leaveReport\(EmployeeID):leavetracker-papi-config">
+		<set-variable value="#[attributes.uriParams.'EmployeeID']" doc:name="/EmployeeID" doc:id="4a28d22b-9db7-4179-9afd-cb3878cdd7cc" variableName="EmployeeID"/>
+		<flow-ref doc:name="leaveReport" doc:id="a2f404ba-4f2d-4b80-9116-904864f1e6c4" name="leaveReportSub_Flow"/>
+		<choice doc:name="checking the employee exists or not" doc:id="e88bf09e-bd7f-47fa-85f2-ebcc9760b544">
+			<when expression="#[sizeOf(vars.LeaveReport)== 0]">
+				<set-payload value='#["No records found for the Employee"]' doc:name="response" doc:id="8bf2ec72-a598-42ba-a59c-3268e1ecac43" />
+			</when>
+			<otherwise >
+				<flow-ref doc:name="totalLeave" doc:id="9707f5f7-6c51-4bae-896c-c0e441081cc8" name="totalLeave-get-Sub_Flow" target="totalLeave"/>
+				<flow-ref doc:name="leaveReport" doc:id="1529dfc6-7a3f-409e-a8d9-a380f2b1992b" name="calculateLeaveSub_Flow" />
+				<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;[&#10;    {&#10;        "LeaveType": "Sick Leave",&#10;        "Available": vars.totalLeave[0]."sickLeave" - (vars.SickfullBooked  + payload.Sickhalf[0])  ++ " " ++"days",&#10;        "Booked": vars.SickfullBooked  + payload.Sickhalf[0]  ++ " " ++ "days"&#10;    },&#10;    {&#10;        "LeaveType": "Personal Leave",&#10;        "Available": vars.totalLeave[0]."personalLeave" - (vars.PersonalfullBooked  + payload.Personalhalf[0])  ++ " " ++"days",&#10;        "Booked": vars.PersonalfullBooked  + payload.Personalhalf[0]  ++ " " ++ "days"&#10;    }&#10;    &#10;]]' doc:name="output response" doc:id="7c7cf547-7c93-4873-a294-9a917deb379a" />
+			</otherwise>
+		</choice>
+    </flow>
+    <flow name="post:\Leave\addLeave:application\json:leavetracker-papi-config">
+        <flow-ref doc:name="addLeave" doc:id="3e5b7ee6-61e7-4050-b795-cf59f68e4293" name="addLeaveSub_Flow"/>
+    </flow>
+    <flow name="post:\Leave\holidays:application\json:leavetracker-papi-config">
+		<flow-ref doc:name="Flow Reference" doc:id="0200f19f-e12b-4026-a248-056d017815e1" name="post-holidaySub_Flow"/>
+    </flow>
+    <flow name="get:\Leave\holidays:leavetracker-papi-config">
+		<flow-ref doc:name="Flow Reference" doc:id="66c36314-d6d4-4597-9c3f-b25acde990d0" name="get-holidaySub_Flow"/>
+    </flow>
+</mule>

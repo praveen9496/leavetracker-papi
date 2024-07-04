@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<sub-flow name="totalLeave-get-Sub_Flow" doc:id="78ff2bda-64f9-4a88-a17d-177ee9921965" >
+		<http:request doc:name="totalLeave-get-sapi" doc:id="3a15c0a0-a129-4f79-a0b0-f934b4fa0b66" config-ref="HTTP_Request_leaveTracker-sapi" method="${leaveTracker-sapi.totalLeave-retrieveMethod}" path="${leaveTracker-sapi.totalLeave}" />
+		<set-payload value="#[%dw 2.0&#10;output application/json&#10;---&#10;payload map {&#10;  sickLeave: $.sickLeave,&#10;  personalLeave: $.personalLeave&#10;}]" doc:name="payload.totalLeave" doc:id="a89d163c-840a-45b5-a4c1-d0ae080bc2bc" />
+	</sub-flow>
+	<sub-flow name="totalLeave-put-Sub_Flow" doc:id="968394cf-7acf-4bc9-8626-21c0e12e5a4e" >
+		<until-successful maxRetries="${until.retries}" doc:name="Until Successful" doc:id="f73a8f24-3c9b-45d9-866a-6499ddd5fcb1" millisBetweenRetries="${until.millisecs}">
+			<try doc:name="Try" doc:id="dbae9ba5-0cf5-4ada-bb9c-3e29b7960cf5">
+			<http:request method="${leaveTracker-sapi.totalLeave-updateMethod}" doc:name="totalLeave-update-sapi" doc:id="0160c222-5964-48f6-86f7-f645861598e2" config-ref="HTTP_Request_leaveTracker-sapi" path="${leaveTracker-sapi.totalLeave}" />
+				<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;  "message" : "Total Leave Updated"&#10;}]' doc:name="response" doc:id="c85c0f33-17e5-47f8-9f6e-185f54621438" />
+				<error-handler ref="request-errorHandler" />
+		</try>
+		</until-successful>
+	</sub-flow>
+</mule>
